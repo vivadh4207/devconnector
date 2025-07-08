@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const gravatar = require('gravatar'); // Assuming you have a gravatar package installed
 const bcrypt = require('bcryptjs'); // Assuming you have bcryptjs package installed
+const jwt = require('jsonwebtoken'); // Assuming you have jsonwebtoken package installed
+const config = require('config'); // Assuming you have config package installed
 const { check, validationResult } = require('express-validator');
 const User = require('../../models/User'); // Assuming you have a User model defined    
 // @route   GET api/users
@@ -38,6 +40,21 @@ router.post('/', [
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);  
     await user.save();
+    const payload = {
+      user: {
+        id: user.id
+      }
+    }
+    jwt.sign(
+      payload,
+      config.get('jwtToken'), // Ensure you have a JWT_SECRET in your environment variables
+      { expiresIn: 360000 }, // Token expiration time
+      (err, token) => {
+        if (err) throw err;
+        // Return jsonwebtoken (JWT) or any other response as needed
+        res.status(201).json({ token });
+      }
+    );
     // Return jsonwebtoken (JWT) or any other response as needed
     res.status(201).json({ msg: 'User registered successfully' });
     } catch (err) { 
